@@ -17,11 +17,17 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      await initializeFromToken(Cookies.get("token") ?? "");
+      const token = Cookies.get("token");
+      if (token) {
+        try {
+          await initializeFromToken(token);
+        } catch (err) {
+          console.error("Error inicializando token:", err);
+        }
+      }
       try {
         const result = await ProductServices.getAllProduct();
-        const data: IProduct[] = result ?? [];
-        setProducts(data);
+        setProducts(result ?? []);
       } catch (error) {
         console.error("Error al obtener productos:", error);
       } finally {
@@ -31,7 +37,7 @@ export default function ProductPage() {
     fetchProducts();
   }, [initializeFromToken]);
 
-  const addCar = async (guid: string, quantity: number | undefined) => {
+  const addCar = async (guid: string, quantity?: number) => {
     const body: CreateProductInCar = {
       Idcar: cardId,
       IdProduct: guid,
@@ -40,40 +46,20 @@ export default function ProductPage() {
     await CarProductServices.createCarProduct(body);
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <svg
-          className="w-12 h-12 mb-4 animate-spin text-gray-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          ></path>
-        </svg>
-        <span className="text-lg text-gray-700">Cargando productos…</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mt-6">
+    <div className="container mt-6 relative">
       <h1 className="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-8">
         🛒 Explora Nuestros Productos
       </h1>
-      <div className="row">
+
+      {/* Spinner overlay */}
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gray-600"></div>
+        </div>
+      )}
+
+      <div className="row opacity-90">
         {products.map((p) => (
           <div className="col-12 col-sm-6 col-md-6 col-lg-4 mb-4" key={p.id}>
             <ProductCard product={p} addAction={addCar} />
