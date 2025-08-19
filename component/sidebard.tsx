@@ -4,6 +4,17 @@ import Cookies from "js-cookie";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { showLoader } from "./modal/LoaderModalProvider";
+
+// 👇 Importamos iconos desde lucide-react
+import {
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  ShoppingCart,
+  Store,
+} from "lucide-react";
 
 export default function Sidebar() {
   const router = useRouter();
@@ -11,43 +22,67 @@ export default function Sidebar() {
   const { data: session, status } = useSession();
 
   const links = [
-    { href: "/dashboard", label: "📊 Dashboard", exact: true },
-    { href: "/dashboard/product", label: "📦 Productos" },
-    { href: "/dashboard/orders", label: "📑 Pedidos" },
-    { href: "/dashboard/car", label: "🛍️ Ver Carrito", isButton: true },
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      icon: <LayoutDashboard size={18} />,
+      exact: true,
+    },
+    {
+      href: "/dashboard/product",
+      label: "Productos",
+      icon: <Package size={18} />,
+    },
+    {
+      href: "/dashboard/orders",
+      label: "Pedidos",
+      icon: <ClipboardList size={18} />,
+    },
+    {
+      href: "/dashboard/car",
+      label: "Ver Carrito",
+      icon: <ShoppingCart size={18} />,
+      isButton: true,
+    },
   ];
 
   const renderLink = ({
     href,
     label,
+    icon,
     isButton = false,
     exact = false,
   }: any) => {
     const isActive = exact ? pathname === href : pathname.startsWith(href);
     const className = isButton
-      ? `btn w-100 ${isActive ? "btn-light text-dark" : "btn-outline-light"}`
-      : `nav-link text-white ${isActive ? "active" : ""}`;
+      ? `btn w-100 d-flex align-items-center gap-2 ${
+          isActive ? "btn-light text-dark" : "btn-outline-light"
+        }`
+      : `nav-link text-white d-flex align-items-center gap-2 ${
+          isActive ? "active fw-bold" : ""
+        }`;
 
     return (
       <Link key={href} href={href} className={className}>
-        {label}
+        {icon} <span>{label}</span>
       </Link>
     );
   };
+
   const handleLogout = async () => {
-  const token = Cookies.get("token");
+    showLoader();
+    const token = Cookies.get("token");
 
-  if (status === "authenticated") {
-    Cookies.remove("token");
-    await signOut({ callbackUrl: "/auth/login" });
-  } else if (token) {
-    Cookies.remove("token");
-    router.push("/auth/login");
-  } else {
-    router.push("/auth/login");
-  }
-};
-
+    if (status === "authenticated") {
+      Cookies.remove("token");
+      await signOut({ callbackUrl: "/auth/login" });
+    } else if (token) {
+      Cookies.remove("token");
+      router.push("/auth/login");
+    } else {
+      router.push("/auth/login");
+    }
+  };
 
   return (
     <>
@@ -63,7 +98,9 @@ export default function Sidebar() {
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          <span className="navbar-brand">🛒 Marketplace</span>
+          <span className="navbar-brand d-flex align-items-center gap-2">
+            <Store size={20} /> Marketplace
+          </span>
         </div>
       </nav>
 
@@ -75,8 +112,10 @@ export default function Sidebar() {
         aria-labelledby="offcanvasSidebarLabel"
       >
         <div className="offcanvas-header">
-          <h5 className="text-white">🛒 Marketplace</h5>
-          <h3>{session?.user?.email}</h3>
+          <h5 className="text-white d-flex align-items-center gap-2">
+            <Store size={20} /> Marketplace
+          </h5>
+          <h6>{session?.user?.email}</h6>
           <button
             type="button"
             className="btn-close btn-close-white"
@@ -92,10 +131,10 @@ export default function Sidebar() {
           <div className="mt-auto">
             {renderLink(links[links.length - 1])}
             <button
-              className="btn btn-outline-light w-100 mt-2"
+              className="btn btn-outline-light w-100 mt-2 d-flex align-items-center gap-2"
               onClick={handleLogout}
             >
-              🔒 Cerrar sesión
+              <LogOut size={18} /> Cerrar sesión
             </button>
           </div>
         </div>
@@ -114,17 +153,19 @@ export default function Sidebar() {
           overflow: "hidden",
         }}
       >
-        <h4 className="text-center mb-4">🛒 Marketplace</h4>
+        <h4 className="text-center mb-4 d-flex align-items-center gap-2">
+          <Store size={22} /> Marketplace
+        </h4>
         <nav className="nav nav-pills flex-column mb-auto">
           {links.slice(0, -1).map(renderLink)}
         </nav>
         <div className="mt-auto">
           {renderLink(links[links.length - 1])}
           <button
-            className="btn btn-outline-light w-100 mt-2"
+            className="btn btn-outline-light w-100 mt-2 d-flex align-items-center gap-2"
             onClick={handleLogout}
           >
-            🔒 Cerrar sesión
+            <LogOut size={18} /> Cerrar sesión
           </button>
         </div>
       </aside>

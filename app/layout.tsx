@@ -1,8 +1,11 @@
 import BootstrapClientOnly from "@/component/BootstrapClientOnly";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+
 import Provider from "@/component/Provider";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,7 +32,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Provider>
-          {children}
+          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <Toaster richColors position="top-right" />
           <BootstrapClientOnly />
         </Provider>
       </body>

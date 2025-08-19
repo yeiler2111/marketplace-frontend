@@ -1,37 +1,51 @@
 "use client";
 
+import { hideLoader, useLoaderModal } from "@/component/modal/LoaderModalProvider";
 import authInstance from "@/lib/axios/AuthInstance";
 import Cookies from "js-cookie";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { showLoader } from "@/component/modal/LoaderModalProvider";
+
 export default function LoginPage() {
   const route = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  useEffect(() => {
+    hideLoader();
+  }, []);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login", { email, password });
+    showLoader();
     try {
       const res = await authInstance.post("api/auth/login", {
         Email: email,
         Contrasena: password,
       });
 
-      const inOneHour = new Date(new Date().getTime() + 60 * 60 * 1000);
-
-      const token = res.data.token;
-
-      Cookies.set("token", token, {
+      const inOneHour = new Date(Date.now() + 60 * 60 * 1000);
+      Cookies.set("token", res.data.token, {
         expires: inOneHour,
         sameSite: "lax",
         secure: false,
       });
-      route.push("/dashboard");
-    } catch (error) {
-      console.log(error + "se ha detectado una amanaza");
-    }
+
+      // 👇 Espera un poco antes de redirigir para que se vea el modal
+      setTimeout(() => {
+        route.push("/dashboard");
+      }, 1000);
+    } catch (err: any) {}
+  };
+  const { show, hide } = useLoaderModal();
+
+  const simulateProcess = async () => {
+    show("loading", "Procesando...");
+    setTimeout(() => {
+      show("success", "¡Éxito!");
+      setTimeout(() => hide(), 1500);
+    }, 2000);
   };
 
   return (
@@ -49,6 +63,7 @@ export default function LoginPage() {
             height={100}
           />
         </div>
+
         <form onSubmit={handleLogin}>
           <div className="mb-3">
             <input
@@ -90,14 +105,6 @@ export default function LoginPage() {
         </button>
 
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-2 text-center">
-          {/* <a
-            onClick={() => route?.push("/auth/recovery")}
-            className="text-decoration-none text-primary"
-            role="button"
-          >
-            ¿Olvidaste tu contraseña?
-          </a> */}
-
           <div className="text-muted">
             ¿No tienes cuenta?{" "}
             <a

@@ -1,7 +1,6 @@
 "use client";
 
 import { IProduct } from "@/app/dashboard/page";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface ProductCardProps {
@@ -10,53 +9,40 @@ interface ProductCardProps {
   addAction: (guid: string, quantity?: number) => void;
   deleteCard?: boolean;
   disabledCont?: boolean;
-  cantidad?:number;
+  cantidad?: number;
+  onViewDetail?: () => void;
+  onDelete?: (id: string) => void; // 🔹 callback para eliminar
 }
 
 export default function ProductCard({
   product,
   showActions = false,
   addAction,
-  deleteCard,
+  deleteCard = false,
   disabledCont = false,
-  cantidad=0
+  cantidad = 0,
+  onViewDetail,
+  onDelete,
 }: ProductCardProps) {
-  const router = useRouter();
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState<number>(1);
+
   const handleAddToCart = async () => {
     if (product.stock > 0 && quantity > 0) {
-     await addAction(product.idProducto ?? product.id ?? "", quantity);
+      await addAction(product?.idProducto ?? product?.id ?? "", quantity);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1500);
     }
   };
 
-  const goToDetail = () => {
-    router.push(`/productos/${product.id}`);
-  };
-
-  const increaseQty = () => {
-    if (quantity < product.stock) setQuantity(quantity + 1);
-  };
-
-  const decreaseQty = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(product?.idProducto ?? product?.id ?? "");
+    }
   };
 
   return (
     <div className="card h-100 shadow-sm">
-      {deleteCard && (
-        <div className="d-flex gap-2 mt-2 position-absolute">
-          <button
-            className="btn btn-danger"
-            onClick={async () =>
-              await addAction(product.idProducto ?? product.id ?? "")
-            }
-          >
-            🗑️
-          </button>
-        </div>
-      )}
-
       {(product.image || product.imagen) && (
         <img
           src={product.image ?? product.imagen}
@@ -71,39 +57,48 @@ export default function ProductCard({
         <p className="card-text text-muted">{product.descripcion}</p>
         <div className="mt-auto">
           <p className="fw-bold text-success mb-1">${product.precio}</p>
-          <span
-            className={`badge mb-2 ${
-              product.stock <= 5 ? "bg-danger" : "bg-success"
-            }`}
-          >
-            Stock: {product.stock}
-          </span>
-          <div className="d-flex align-items-center gap-2 mb-2">
 
-            <button
-              disabled={disabledCont}
-              className="btn btn-outline-secondary"
-              onClick={decreaseQty}
-            >
-              -
-            </button>
-            <span className="fw-bold">{(!disabledCont ? quantity : cantidad )}</span>
-            <button
-              disabled={disabledCont}
-              className="btn btn-outline-secondary"
-              onClick={increaseQty}
-            >
-              +
-            </button>
-          </div>
+          {/* 🔹 Controles de cantidad (ocultos si es deleteCard) */}
+          {!deleteCard && (
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <button
+                disabled={disabledCont}
+                className="btn btn-outline-secondary"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                -
+              </button>
+              <span className="fw-bold">
+                {!disabledCont ? quantity : cantidad}
+              </span>
+              <button
+                disabled={disabledCont}
+                className="btn btn-outline-secondary"
+                onClick={() =>
+                  setQuantity(Math.min(product.stock, quantity + 1))
+                }
+              >
+                +
+              </button>
+            </div>
+          )}
 
-          {!showActions && (
-            <>
-              {/* Botones */}
+          {/* 🔹 Si deleteCard=true → muestro botón Eliminar */}
+          {/* 🔹 Si deleteCard=true → muestro botón Eliminar */}
+          {deleteCard ? (
+            <button
+              className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+              onClick={handleDelete}
+            >
+              <i className="bi bi-trash"></i> {/* Bootstrap Icons */}
+              Eliminar
+            </button>
+          ) : (
+            !showActions && (
               <div className="d-flex gap-2">
                 <button
                   className="btn btn-outline-secondary w-50"
-                  onClick={goToDetail}
+                  onClick={onViewDetail}
                 >
                   Ver detalle
                 </button>
@@ -115,13 +110,13 @@ export default function ProductCard({
                   {product.stock === 0 ? "Sin stock" : "Agregar"}
                 </button>
               </div>
+            )
+          )}
 
-              {added && (
-                <div className="alert alert-success mt-2 p-1 text-center">
-                  ¡Agregado al carrito!
-                </div>
-              )}
-            </>
+          {added && (
+            <div className="alert alert-success mt-2 p-1 text-center">
+              ¡Agregado al carrito!
+            </div>
           )}
         </div>
       </div>

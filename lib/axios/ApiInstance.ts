@@ -14,7 +14,10 @@ apiInstance.interceptors.request.use((config) => {
 });
 
 apiInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('autorizado')
+    return response
+  },
   (error) => {
     if (error.response?.status === 401) {
       console.warn("Sesión expirada, redirigiendo a login...");

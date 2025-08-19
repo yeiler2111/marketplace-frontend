@@ -1,18 +1,18 @@
 'use client';
 import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Legend,
-    Line,
-    LineChart,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
 
 interface Props {
@@ -26,7 +26,6 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 export default function DashboardCharts({ salesData, spendingData, pieData }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Gráfico de línea - Ventas mensuales */}
       <div className="bg-white p-4 rounded-2xl shadow">
         <h2 className="text-lg font-semibold mb-2">📈 Ventas por mes</h2>
         <ResponsiveContainer width="100%" height={250}>

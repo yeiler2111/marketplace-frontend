@@ -1,71 +1,127 @@
 "use client";
 
 import ProductCard from "@/component/Card";
+import { hideLoader, showLoader } from "@/component/modal/LoaderModalProvider";
+import ProductDetailModal from "@/component/products/ProductDetailModal";
 import { CarProductServices, CreateProductInCar } from "@/services/CarServices";
 import { ProductServices } from "@/services/ProductServices";
 import useGlobalStore from "@/storge/cartStore";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
+import { ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { IProduct } from "../page";
 
 export default function ProductPage() {
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const initializeFromToken = useGlobalStore((a) => a.initializeFromToken);
-  const cardId = useGlobalStore((data) => data.cartId);
+  const initializeFromToken = useGlobalStore((s) => s.initializeFromToken);
+  const cartId = useGlobalStore((s) => s.cartId);
+  const queryClient = useQueryClient();
+
+  const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const token = Cookies.get("token");
-      if (token) {
-        try {
-          await initializeFromToken(token);
-        } catch (err) {
-          console.error("Error inicializando token:", err);
-        }
-      }
-      try {
-        const result = await ProductServices.getAllProduct();
-        setProducts(result ?? []);
-      } catch (error) {
-        console.error("Error al obtener productos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
+    const token = Cookies.get("token");
+    if (token) initializeFromToken(token);
   }, [initializeFromToken]);
 
-  const addCar = async (guid: string, quantity?: number) => {
+  const {
+    data: products = [],
+    isError,
+    isFetching,
+  } = useQuery<IProduct[]>({
+    queryKey: ["products"],
+    queryFn: async () => {
+      showLoader("Cargando productos...");
+      try {
+        return (await ProductServices.getAllProduct()) ?? [];
+      } finally {
+        hideLoader();
+      }
+    },
+    staleTime: 1000 * 60,
+  });
+
+  const { data: cartProducts = [] } = useQuery({
+    queryKey: ["cartProducts", cartId],
+    queryFn: async () => {
+      if (!cartId) return [];
+      return await CarProductServices.getAllProductForIdCar(cartId);
+    },
+    enabled: !!cartId,
+  });
+
+  const addCarMutation = useMutation({
+    mutationFn: (body: CreateProductInCar) =>
+      CarProductServices.createCarProduct(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cartProducts", cartId] });
+    },
+  });
+
+  const addCar = async (guid: string, quantity = 1) => {
+    if (!cartId) return;
     const body: CreateProductInCar = {
-      Idcar: cardId,
+      Idcar: cartId,
       IdProduct: guid,
-      stock: quantity ?? 1,
+      stock: quantity,
     };
-    await CarProductServices.createCarProduct(body);
+    addCarMutation.mutate(body);
   };
 
+  const cartCount = cartProducts?.length ?? 0;
+
   return (
-    <div className="container mt-6 relative">
-      <h1 className="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-8">
-        🛒 Explora Nuestros Productos
+    <div className="container mt-5 position-relative text-dark">
+      <h1 className="display-6 fw-bold text-center mb-4">
+        Explora Nuestros Productos
       </h1>
 
-      {/* Spinner overlay */}
-      {loading && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gray-600"></div>
-        </div>
+      {isError && (
+        <p className="text-danger text-center">
+          Error al cargar productos. Intenta de nuevo.
+        </p>
       )}
 
-      <div className="row opacity-90">
+      <div className="row" style={{ opacity: isFetching ? 0.5 : 1 }}>
         {products.map((p) => (
           <div className="col-12 col-sm-6 col-md-6 col-lg-4 mb-4" key={p.id}>
-            <ProductCard product={p} addAction={addCar} />
+            <ProductCard
+              product={p}
+              addAction={addCar}
+              onViewDetail={() => setSelectedProduct(p)} // 🔹 nuevo evento
+            />
           </div>
         ))}
       </div>
+
+      {/* Modal de detalle */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={addCar}
+        />
+      )}
+
+      {/* Botón carrito */}
+      <button
+        className="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center position-fixed"
+        style={{
+          bottom: "20px",
+          right: "20px",
+          width: "60px",
+          height: "60px",
+          zIndex: 1050,
+        }}
+        onClick={() => (window.location.href = "/dashboard/car")}
+      >
+        <ShoppingCart size={28} />
+        {cartCount > 0 && (
+          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {cartCount}
+          </span>
+        )}
+      </button>
     </div>
   );
 }

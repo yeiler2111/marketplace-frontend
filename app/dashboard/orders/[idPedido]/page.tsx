@@ -5,7 +5,6 @@ import SweetAlert from "@/services/sweetAlert";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// Interfaces según la estructura real del pedido
 interface Producto {
   idProducto: string;
   nombre: string;
@@ -38,7 +37,6 @@ export default function OrderDetail() {
 
   const handlerCancel = async () => {
     try {
-      debugger;
       const res = await OrderService.cancerOrderByidOrder(
         pedido?.idPedido ?? ""
       );

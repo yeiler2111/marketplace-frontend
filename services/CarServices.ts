@@ -1,5 +1,5 @@
 import apiInstance from "@/lib/axios/ApiInstance";
-import SweetAlert from "./sweetAlert";
+import { toast } from "sonner";
 
 export interface CreateProductInCar {
     Idcar: string
@@ -12,11 +12,11 @@ export const CarProductServices = {
         try {
             const res = await apiInstance.post(`${url}/createCarProduct`, bodyRequest)
             if (res.data.success) {
-                SweetAlert.success("Se ha registrado exitosamente el producto.", "Bien!!")
+                toast.success("Producto agregado al carrito");
             }
             return res
-        } catch (error : any) {
-            SweetAlert.error(error?.message as string, "ha ocurrido un error")
+        } catch (error: any) {
+            toast.error("Error al agregar al carrito");
         }
     },
     async getAllProductForIdCar(guid: string) {
@@ -32,8 +32,11 @@ export const CarProductServices = {
     async deleteCarProduct(idcar: string, IdProduct: string) {
         try {
             const res = await apiInstance.post(`${url}/delete`, { IdCar: idcar, "IdProduct": IdProduct })
+            toast.success("Eliminado con exito");
         } catch (error) {
             console.log(error)
+            toast.error("algo salio mal");
+
         }
     }
 }
