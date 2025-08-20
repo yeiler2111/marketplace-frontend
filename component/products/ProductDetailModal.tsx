@@ -46,7 +46,7 @@ export default function ProductDetailModal({
             </button>
             <button
               className="btn btn-primary"
-              onClick={() => onAddToCart(product.id, 1)}
+              onClick={() => onAddToCart(product.id as string, 1)}
             >
               Agregar al carrito
             </button>
