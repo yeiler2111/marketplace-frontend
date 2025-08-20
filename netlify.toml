@@ -1,6 +1,8 @@
 [build]
-  command = "npm run build"
-  publish = ".next"
+  command = "pnpm run build"
+  publish = "dist" # o la carpeta de tu build
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+[build.environment]
+  NODE_VERSION = "20"          # o el que uses realmente
+  NPM_FLAGS = "--version"      # evita que Netlify intente usar npm
+  NETLIFY_USE_PNPM = "true"    # fuerza pnpm
