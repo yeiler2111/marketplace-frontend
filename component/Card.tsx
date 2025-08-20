@@ -6,7 +6,7 @@ import { useState } from "react";
 interface ProductCardProps {
   product: IProduct;
   showActions?: boolean;
-  addAction: (guid: string, quantity?: number) => void;
+  addAction?: (guid: string, quantity?: number) => void;
   deleteCard?: boolean;
   disabledCont?: boolean;
   cantidad?: number;
