@@ -29,7 +29,7 @@ export default function ProductCard({
 
   const handleAddToCart = async () => {
     if (product.stock > 0 && quantity > 0) {
-      await addAction(product?.idProducto ?? product?.id ?? "", quantity);
+      addAction?.(product?.idProducto ?? product?.id ?? "", quantity);
       setAdded(true);
       setTimeout(() => setAdded(false), 1500);
     }
