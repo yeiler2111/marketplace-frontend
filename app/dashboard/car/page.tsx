@@ -1,4 +1,3 @@
-// app/carrito/page.tsx
 "use client";
 
 import ProductCard from "@/component/Card";
@@ -13,6 +12,7 @@ import SweetAlert from "@/services/sweetAlert";
 import useGlobalStore from "@/storge/cartStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { IProduct } from "../page";
@@ -27,6 +27,7 @@ interface ICarritoItem {
 }
 
 export default function CarritoPage() {
+  const { data: session, status } = useSession(); // 👈 aquí traes bien la sesión
   const cartId = useGlobalStore((state) => state.cartId);
   const userId = useGlobalStore((state) => state.userId);
   const initializeFromToken = useGlobalStore(
@@ -35,14 +36,21 @@ export default function CarritoPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // 🔹 Inicializar token en store cuando se autentique
+  useEffect(() => {
+    if (status === "authenticated") {
+      const cookieToken = Cookies.get("token");
+      const token = cookieToken || (session?.token as string);
+      if (token) {
+        initializeFromToken(token);
+      }
+    }
+  }, [status, session, initializeFromToken]);
+
   // 🔹 Fetch carrito
   const fetchCarrito = async (): Promise<ICarritoItem[]> => {
-    const token = Cookies.get("token");
-    await initializeFromToken(token ?? "");
-
     if (!cartId) return [];
-    const response = await CarProductServices.getAllProductForIdCar(cartId);
-    return response;
+    return await CarProductServices.getAllProductForIdCar(cartId);
   };
 
   const {
@@ -51,9 +59,9 @@ export default function CarritoPage() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["carrito", cartId],
+    queryKey: ["carrito", cartId, session?.token], // 👈 dependencias claras
     queryFn: fetchCarrito,
-    enabled: !!cartId, // solo cuando exista cartId
+    enabled: status === "authenticated" && !!cartId, // 👈 se habilita solo cuando todo está listo
   });
 
   // 🔹 Loader global
@@ -75,7 +83,9 @@ export default function CarritoPage() {
     mutationFn: (idProduct: string) =>
       CarProductServices.deleteCarProduct(cartId!, idProduct),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["carrito", cartId] });
+      queryClient.invalidateQueries({
+        queryKey: ["carrito", cartId, session?.token],
+      });
     },
     onError: () => {
       showError("No se pudo eliminar el producto ❌");
@@ -91,7 +101,9 @@ export default function CarritoPage() {
           `El pedido se ha creado exitosamente! 🛒 ID: ${res.data}`,
           "Exitoso"
         );
-        queryClient.invalidateQueries({ queryKey: ["carrito", cartId] });
+        queryClient.invalidateQueries({
+          queryKey: ["carrito", cartId, session?.token],
+        });
         router.push("/dashboard/orders");
       } else {
         throw new Error("Respuesta inválida");

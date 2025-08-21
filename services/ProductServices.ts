@@ -6,6 +6,7 @@ export const ProductServices = {
     async getAllProduct() {
         try {
             const res = await apiInstance.get<IProduct[]>(`${url}/getAllProducts`)
+            debugger
             return res.data
         } catch (error) {
             console.log(error);
