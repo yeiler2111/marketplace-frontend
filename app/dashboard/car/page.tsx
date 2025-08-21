@@ -40,7 +40,7 @@ export default function CarritoPage() {
   useEffect(() => {
     if (status === "authenticated") {
       const cookieToken = Cookies.get("token");
-      const token = cookieToken || (session?.token as string);
+      const token = cookieToken || (session?.idToken as string);
       if (token) {
         initializeFromToken(token);
       }
@@ -59,7 +59,7 @@ export default function CarritoPage() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["carrito", cartId, session?.token], // 👈 dependencias claras
+    queryKey: ["carrito", cartId, session?.idToken], // 👈 dependencias claras
     queryFn: fetchCarrito,
     enabled: status === "authenticated" && !!cartId, // 👈 se habilita solo cuando todo está listo
   });
@@ -84,7 +84,7 @@ export default function CarritoPage() {
       CarProductServices.deleteCarProduct(cartId!, idProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["carrito", cartId, session?.token],
+        queryKey: ["carrito", cartId, session?.idToken],
       });
     },
     onError: () => {
@@ -102,7 +102,7 @@ export default function CarritoPage() {
           "Exitoso"
         );
         queryClient.invalidateQueries({
-          queryKey: ["carrito", cartId, session?.token],
+          queryKey: ["carrito", cartId, session?.idToken],
         });
         router.push("/dashboard/orders");
       } else {

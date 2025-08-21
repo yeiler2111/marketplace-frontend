@@ -12,8 +12,8 @@ apiInstance.interceptors.request.use(async (config) => {
   debugger
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-  } else if (session?.token) {
-    config.headers.Authorization = `Bearer ${session.token as string | undefined}`;
+  } else if (session?.idToken) {
+    config.headers.Authorization = `Bearer ${session.idToken as string | undefined}`;
   }
 
   return config;
